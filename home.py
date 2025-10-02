@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain.memory import ConversationBufferMemory
-from langchain_openai import OpenAI
+from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 
 import os
@@ -13,12 +13,12 @@ TIPOS_ARQUIVOS_VALIDOS = [
 ]
 
 CONFIG_MODELOS = {
-    'Groq': {
-        'modelos': ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'meta-llama/llama-guard-4-12b'],
-        'chat': OpenAI
-    },
     'OpenAI': {
         'modelos': ['o4-mini-2025-04-16', 'gpt-4.1-mini-2025-04-14', 'gpt-4o-2024-08-06', 'o3-2025-04-16'],
+        'chat': ChatOpenAI
+    },
+    'Groq': {
+        'modelos': ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'meta-llama/llama-guard-4-12b'],
         'chat': ChatGroq
     }
 }
@@ -29,12 +29,28 @@ MEMORIA.chat_memory.add_ai_message('Olá, Humano.')
 
 
 def carrega_modelo(provedor, modelo, api_key):
-    chat = CONFIG_MODELOS[provedor]['chat'](model=modelo, api_key=api_key)
+    kwargs = {"model": modelo, "api_key": api_key}
+
+    # Modelos de raciocínio da OpenAI só aceitam temperature=1
+    # (o1*, o3*, o4-mini*, e alguns snapshots do 4o como 2024-08-06).
+    if provedor == "OpenAI" and (
+        modelo.startswith(("o", "gpt-4o-2024"))
+        or modelo in {"o1-preview", "o1-mini", "o3", "o4-mini"}
+    ):
+        kwargs["temperature"] = 1
+    else:
+        # Se quiser manter o "estilo" da aula, pode usar 0.7 nos demais
+        # ou simplesmente NÃO definir temperature para herdar o default do provedor.
+        kwargs["temperature"] = 0.7
+
+    chat = CONFIG_MODELOS[provedor]['chat'](**kwargs)
     st.session_state['chat'] = chat
 
 
 def pagina_chat():
     st.header("🤖 Bem vindo ao Oráculo", divider=True)
+
+    chat_model = st.session_state.get('chat')
 
     memoria = st.session_state.get('memoria', MEMORIA)
 
@@ -44,9 +60,16 @@ def pagina_chat():
     
     input_usuario = st.chat_input('Fale com o oráculo')
     if input_usuario:
+        chat = st.chat_message('human')
+        chat.markdown(input_usuario)
+
+        chat = st.chat_message('ai')
+        resposta = chat.write_stream(chat_model.stream(input_usuario))
+        
         memoria.chat_memory.add_user_message(input_usuario)
+        memoria.chat_memory.add_ai_message(resposta)
+
         st.session_state['memoria'] = memoria
-        st.rerun()
 
 def sidebar():
     tabs = st.tabs(['Upload de Arquivos', 'Seleção de Modelos'])
