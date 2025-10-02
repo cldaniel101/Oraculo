@@ -1,4 +1,5 @@
 import streamlit as st
+from langchain.memory import ConversationBufferMemory
 
 TIPOS_ARQUIVOS_VALIDOS = [
     'Site', 'Youtube', 'PDF', 'Csv', 'Txt'
@@ -9,25 +10,23 @@ CONFIG_MODELOS = {
     'OpenAI': {'modelos': ['o4-mini-2025-04-16', 'gpt-4.1-mini-2025-04-14', 'gpt-4o-2024-08-06', 'o3-2025-04-16']}
 }
 
-MENSAGENS_DE_EXEMPLO = [
-    ('user', 'Olá'),
-    ('assistant', 'Tudo bem?'),
-    ('user', 'Tudo ótimo'),
-]
+MEMORIA = ConversationBufferMemory()
+MEMORIA.chat_memory.add_user_message('Olá, IA.')
+MEMORIA.chat_memory.add_ai_message('Olá, Humano.')
 
 def pagina_chat():
     st.header("🤖 Bem vindo ao Oráculo", divider=True)
 
-    mensagens = st.session_state.get('mensagens', MENSAGENS_DE_EXEMPLO)
+    memoria = st.session_state.get('memoria', MEMORIA)
 
-    for mensagem in mensagens:
-        chat = st.chat_message(mensagem[0])
-        chat.markdown(mensagem[1])
+    for mensagem in memoria.buffer_as_messages:
+        chat = st.chat_message(mensagem.type)
+        chat.markdown(mensagem.content)
     
     input_usuario = st.chat_input('Fale com o oráculo')
     if input_usuario:
-        mensagens.append(('user', input_usuario))
-        st.session_state['mensagens'] = mensagens
+        memoria.chat_memory.add_user_message(input_usuario)
+        st.session_state['memoria'] = memoria
         st.rerun()
 
 def sidebar():
@@ -49,7 +48,7 @@ def sidebar():
         provedor = st.selectbox('Selecione o provedor dos modelos', CONFIG_MODELOS.keys())
         modelo = st.selectbox('Selecione o modelo', CONFIG_MODELOS[provedor]['modelos'])
         api_key = st.text_input(
-            f'Adicione a API Key para a {provedor}', 
+            f'Adi.cione a API Key para a {provedor}', 
             value=st.session_state.get(f'api_key_{provedor}')
             )
 
