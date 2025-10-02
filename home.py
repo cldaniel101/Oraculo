@@ -1,18 +1,37 @@
 import streamlit as st
 from langchain.memory import ConversationBufferMemory
+from langchain_openai import OpenAI
+from langchain_groq import ChatGroq
+
+import os
+from dotenv import load_dotenv, find_dotenv
+
+_ = load_dotenv(find_dotenv())
 
 TIPOS_ARQUIVOS_VALIDOS = [
     'Site', 'Youtube', 'PDF', 'Csv', 'Txt'
 ]
 
 CONFIG_MODELOS = {
-    'Groq': {'modelos': ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'meta-llama/llama-guard-4-12b']},
-    'OpenAI': {'modelos': ['o4-mini-2025-04-16', 'gpt-4.1-mini-2025-04-14', 'gpt-4o-2024-08-06', 'o3-2025-04-16']}
+    'Groq': {
+        'modelos': ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'meta-llama/llama-guard-4-12b'],
+        'chat': OpenAI
+    },
+    'OpenAI': {
+        'modelos': ['o4-mini-2025-04-16', 'gpt-4.1-mini-2025-04-14', 'gpt-4o-2024-08-06', 'o3-2025-04-16'],
+        'chat': ChatGroq
+    }
 }
 
 MEMORIA = ConversationBufferMemory()
 MEMORIA.chat_memory.add_user_message('Olá, IA.')
 MEMORIA.chat_memory.add_ai_message('Olá, Humano.')
+
+
+def carrega_modelo(provedor, modelo, api_key):
+    chat = CONFIG_MODELOS[provedor]['chat'](model=modelo, api_key=api_key)
+    st.session_state['chat'] = chat
+
 
 def pagina_chat():
     st.header("🤖 Bem vindo ao Oráculo", divider=True)
@@ -53,6 +72,9 @@ def sidebar():
             )
 
         st.session_state[f'api_key_{provedor}'] = api_key
+
+    if st.button('Inicializar Oráculo', use_container_width=True):
+        carrega_modelo(provedor, modelo, api_key)
 
 
 def main():
