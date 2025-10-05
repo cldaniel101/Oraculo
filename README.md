@@ -7,6 +7,12 @@ Este projeto foi desenvolvido como prática a partir do material da Asimov Acade
 
 ---
 
+## 🎬 Demonstração
+
+![Demonstração do Oráculo](arquivos/Demonstração%20do%20Oráculo.gif)
+
+---
+
 ## ✨ Funcionalidades
 
 - **Chat com memória**: histórico mantido durante a sessão (LangChain `ConversationBufferMemory`).
