@@ -77,6 +77,15 @@ def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
             st.warning("Informe a URL ou o ID do video antes de continuar.")
             return
         documento = carrega_youtube(arquivo)
+        if documento is None:
+            st.warning(
+                """
+                Não foi possível obter a transcrição do YouTube.
+                Esta funcionalidade é bloqueada em ambientes de nuvem (como o Streamlit Cloud).
+                Para testar a extração de vídeos, por favor, rode esta aplicação localmente.
+                """
+            )
+            return
     elif tipo_normalizado == "pdf":
         if arquivo is None:
             st.warning("Envie um arquivo PDF antes de continuar.")

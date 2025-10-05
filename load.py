@@ -1,4 +1,4 @@
-import os
+﻿import os
 import re
 from urllib.parse import parse_qs, urlparse
 
@@ -9,7 +9,7 @@ from langchain_community.document_loaders import (
     PyPDFLoader,
     TextLoader,
 )
-from youtube_transcript_api import YouTubeTranscriptApi, TranslationLanguageNotAvailable
+from youtube_transcript_api import YouTubeTranscriptApi, TranslationLanguageNotAvailable, RequestBlocked
 
 load_dotenv()
 user_agent = os.getenv("USER_AGENT")
@@ -55,20 +55,23 @@ def extrai_video_id(valor: str) -> str:
 def carrega_youtube(video_id_ou_url: str):
     video_id = extrai_video_id(video_id_ou_url)
 
-    ytt = YouTubeTranscriptApi()
-    tl = ytt.list(video_id)
     try:
-        fetched = ytt.fetch(video_id, languages=["pt", "pt-BR", "en"])
-        raw = fetched.to_raw_data()
-    except TranslationLanguageNotAvailable:
-        tr = tl.find_transcript(["en"])
-        if tr.is_translatable:
-            fetched = tr.translate("pt").fetch()
+        ytt = YouTubeTranscriptApi()
+        tl = ytt.list(video_id)
+        try:
+            fetched = ytt.fetch(video_id, languages=["pt", "pt-BR", "en"])
             raw = fetched.to_raw_data()
-        else:
-            raw = tr.fetch().to_raw_data()
-    texto = "\n".join(segmento["text"] for segmento in raw)
-    return texto
+        except TranslationLanguageNotAvailable:
+            tr = tl.find_transcript(["en"])
+            if tr.is_translatable:
+                fetched = tr.translate("pt").fetch()
+                raw = fetched.to_raw_data()
+            else:
+                raw = tr.fetch().to_raw_data()
+        texto = "\n".join(segmento["text"] for segmento in raw)
+        return texto
+    except RequestBlocked:
+        return None
 
 
 
