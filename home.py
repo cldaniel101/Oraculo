@@ -74,7 +74,7 @@ def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
         documento = carrega_site(arquivo)
     elif tipo_normalizado == "youtube":
         if not arquivo:
-            st.warning("Envie a URL do video antes de continuar.")
+            st.warning("Informe a URL ou o ID do video antes de continuar.")
             return
         documento = carrega_youtube(arquivo)
     elif tipo_normalizado == "pdf":
@@ -171,7 +171,7 @@ def sidebar():
         if tipo_arquivo == "Site":
             arquivo = st.text_input("Digite a url do site")
         if tipo_arquivo == "Youtube":
-            arquivo = st.text_input("Digite a url do vídeo")
+            arquivo = st.text_input("Cole a URL ou o ID do video")
         if tipo_arquivo == "PDF":
             arquivo = st.file_uploader("Faça upload do arquivo pdf", type=[".pdf"])
         if tipo_arquivo == "Csv":
