@@ -61,7 +61,3 @@ def carrega_txt(caminho):
     documento = "\n\n".join([doc.page_content for doc in lista_documentos])
     return documento
 
-
-# Exemplo de uso da nova função:
-doc = "arquivos/knowledge_base.txt"
-print(carrega_txt(doc))
